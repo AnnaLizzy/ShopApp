@@ -156,14 +156,17 @@ public class ProductController {
 
     @GetMapping("")
     public ResponseEntity<ProductListResponse> getProducts(
-            @RequestParam("page") int page,
-            @RequestParam("limit") int limit
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0",name = "category_id") Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit
     ) {
 
         //Tạo pageable từ thông tin trang và giơi hạn
         PageRequest pageRequest = PageRequest.of(
-                page, limit, Sort.by("createAt").descending());
-        Page<ProductResponse> productPage = productServices.getAllProducts(pageRequest);
+                page, limit,
+                Sort.by("id").ascending());
+        Page<ProductResponse> productPage = productServices.getAllProducts(keyword,categoryId,pageRequest);
         //Lấy tổng số trang
         int totalPages = productPage.getTotalPages();
         List<ProductResponse> products = productPage.getContent();

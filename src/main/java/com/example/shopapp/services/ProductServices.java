@@ -11,6 +11,7 @@ import com.example.shopapp.repositories.CategoryRepository;
 import com.example.shopapp.repositories.ProductImageRepository;
 import com.example.shopapp.repositories.ProductRepository;
 import com.example.shopapp.responses.ProductResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,9 +47,13 @@ public class ProductServices implements IProductServices {
     }
 
     @Override
-    public Page<ProductResponse> getAllProducts(PageRequest pageRequest) {
-        return productRepository.findAll(pageRequest)
-                .map(ProductResponse::fromProduct);
+    public Page<ProductResponse> getAllProducts(String keyword,
+                                                Long categoryId,
+                                                PageRequest pageRequest)
+    {
+        Page<Product> productPage;
+        productPage = productRepository.searchProducts(categoryId,keyword, pageRequest);
+        return  productPage.map(ProductResponse::fromProduct);
     }
 
     @Override
@@ -69,11 +74,11 @@ public class ProductServices implements IProductServices {
         return null;
     }
     @Override
+    @Transactional
     public void deleteProduct(long id) {
         Optional<Product> optionalProduct = productRepository.findById(id);
         optionalProduct.ifPresent(productRepository::delete);
     }
-
     @Override
     public boolean existsByName(String name) {
         return productRepository.existsByName(name);
