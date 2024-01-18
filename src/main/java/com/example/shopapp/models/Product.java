@@ -1,7 +1,13 @@
 package com.example.shopapp.models;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+
+
+import java.util.List;
+
 
 
 @Entity
@@ -31,4 +37,10 @@ public class Product extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+
+    @OneToMany(mappedBy = "product")
+    @JsonIgnoreProperties("product")
+    private List<ProductImage> productImages;
+
 }

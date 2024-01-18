@@ -7,10 +7,10 @@ import com.example.shopapp.dtos.ProductImageDTO;
 import com.example.shopapp.exceptions.DataNotFoundException;
 import com.example.shopapp.models.Product;
 import com.example.shopapp.models.ProductImage;
+import com.example.shopapp.repositories.ProductImageRepository;
 import com.example.shopapp.responses.ProductListResponse;
 import com.example.shopapp.responses.ProductResponse;
 import com.example.shopapp.services.IProductServices;
-import com.example.shopapp.services.ProductServices;
 import com.github.javafaker.Faker;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,6 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,12 +29,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("${api.prefix}/products")
@@ -58,7 +57,7 @@ public class ProductController {
                 return ResponseEntity.badRequest().body(errorMessages);
             }
             Product newProduct = productServices.createProduct(productDTO);
-            return ResponseEntity.ok(newProduct);
+            return ResponseEntity.ok().body(newProduct);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Đây là lỗi : " + e.getMessage());
         }
@@ -102,7 +101,9 @@ public class ProductController {
                                 .build()
                 );
                 productImages.add(productImage);
+
             }
+
             return ResponseEntity.ok().body(productImages);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Đây là lỗi :" + e.getMessage());
@@ -176,16 +177,33 @@ public class ProductController {
                         .build());
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable("id") Long productId)
     {
         try {
-            Product existingProducts = productServices.getProductById(productId);
-            return ResponseEntity.ok(existingProducts);
+
+            Product existingProduct = productServices.getProductById(productId);
+
+            return ResponseEntity.ok().body(ProductResponse.fromProduct(existingProduct));
         }catch (Exception e){
+
             return ResponseEntity.badRequest().body("Đây là lỗi : "+e.getMessage());
         }
 
+    }
+    @GetMapping("/by-ids")
+    public ResponseEntity<?> getProductsByIds(@RequestParam("ids") String ids){
+        try {
+            //tach chuoi mang thanh so nguyen
+            List<Long> productIds = Arrays.stream(ids.split(","))
+                    .map(Long::parseLong)
+                    .toList();
+            List<Product> products = productServices.findProductsByIds(productIds);
+            return ResponseEntity.ok().body(products);
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProduct(
@@ -203,19 +221,19 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProductById(
             @PathVariable long id
-    ) {
+    )
+    {
         try {
             productServices.deleteProduct(id);
             return ResponseEntity.ok(String.format("Product id = %d delete success", id));
         }catch (Exception e){
             return ResponseEntity.badRequest().body("Lỗi "+e.getMessage());
         }
-
     }
     @PostMapping("/generateFakeProducts")
     public ResponseEntity<String> generateFakeProducts(){
         Faker faker = new Faker();
-        for (int i = 0;i < 1000; i++){
+        for (int i = 0;i < 500; i++){
             String productName = faker.commerce().productName();
             if (productServices.existsByName(productName)){
                 continue;

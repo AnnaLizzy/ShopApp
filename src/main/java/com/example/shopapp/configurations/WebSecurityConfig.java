@@ -60,13 +60,18 @@ public class WebSecurityConfig {
 
                             .requestMatchers(HttpMethod.POST,
                                     String.format("%s/products/**",apiPrefix)).hasAnyRole(Role.USER)
-                            .requestMatchers(HttpMethod.GET,
-                                    String.format("%s/products**",apiPrefix)).permitAll()
+
                             .requestMatchers(HttpMethod.PUT,
                                     String.format("%s/products/**",apiPrefix)).hasRole(Role.ADMIN)
                             .requestMatchers(HttpMethod.DELETE,
                                     String.format("%s/products/**",apiPrefix)).hasRole(Role.ADMIN)
 
+                            .requestMatchers(HttpMethod.GET,
+                                    String.format("%s/products**",apiPrefix)).permitAll()
+                            .requestMatchers(HttpMethod.GET,
+                                    String.format("%s/products/*",apiPrefix)).permitAll()
+                            .requestMatchers(HttpMethod.GET,
+                                    String.format("%s/products/by-ids**",apiPrefix)).permitAll()
                             .requestMatchers(HttpMethod.GET,
                                     String.format("%s/products/image/*",apiPrefix)).permitAll()
 
